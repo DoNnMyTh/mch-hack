@@ -15,6 +15,8 @@ import {
 	Line
 } from 'recharts'
 
+import { Modal } from 'react-materialize'
+
 import Webcam from 'react-webcam';
 
 import Person from './components/person'
@@ -32,8 +34,10 @@ class App extends Component {
 			this.recognition = new window.webkitSpeechRecognition()
 			this.state = {
 				emotionData: [],
+				emotionDataList: [],
 				sentimentData: [],
 				faceEmotionData: [],
+				faceEmotionDataList: [],
 				keywords: [],
 				running : false,
 				support : true,
@@ -100,6 +104,7 @@ class App extends Component {
 
 					this.setState({faceEmotionData: data})
 					console.log(this.state.faceEmotionData)
+					this.setState((prevState) => {{ faceEmotionDataList: prevState.faceEmotionDataList.push(data) }})
 					// this.setState((prevState) => {{ faceEmotionData: prevState.faceEmotionData.push(responseJson[0].scores) }})
 				})
 				.catch((error) => {
@@ -135,6 +140,7 @@ class App extends Component {
 				}
 			}
 			this.setState({emotionData: emotionGraphData})
+			this.setState((prevState) => {{ emotionDataList: prevState.emotionDataList.push(emotionGraphData) }})
 
 			data = responseJson[2].probabilities
 			temp = {
@@ -270,8 +276,34 @@ class App extends Component {
 			if (this.state.running)
 				return (
 					<button onClick = { () => { 
-						if (!this.state.forceEnd)
+						if (!this.state.forceEnd){
 							this.setState({forceEnd: true})
+							console.log(this.state.faceEmotionDataList)
+
+							var faceAverage = {}
+							this.state.faceEmotionDataList.map((data, i) => {
+								data.map((data, i) => {
+									if (data.name in faceAverage){
+										faceAverage[data.name] = (faceAverage[data.name] + data.value)/2
+									} else {
+										faceAverage[data.name] = data.value
+									}
+								})
+							})
+							console.log(faceAverage)
+
+							var emotionAverage = {}
+							this.state.emotionDataList.map((data, i) => {
+								data.map((data, i) => {
+									if (data.name in emotionAverage){
+										emotionAverage[data.name] = (emotionAverage[data.name] + data.value)/2
+									} else {
+										emotionAverage[data.name] = data.value
+									}
+								})
+							})
+							console.log(emotionAverage)
+						}
 						this.recognition.stop() 
 					} }>
 						Stop !
