@@ -1,0 +1,22 @@
+{
+  "name": "speech_recognition",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^16.2.0",
+    "react-chat-bubble": "^0.8.7",
+    "react-chat-ui": "^0.3.0",
+    "react-dom": "^16.2.0",
+    "react-materialize": "^1.1.2",
+    "react-scripts": "1.1.0",
+    "react-scrollbar": "^0.5.1",
+    "react-webcam": "^0.2.0",
+    "recharts": "^1.0.0-beta.9"
+  },
+  "scripts": {
+    "start": "PORT=8000 react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}
