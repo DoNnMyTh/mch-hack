@@ -5,13 +5,18 @@ import {
 	BarChart,
 	LineChart,
 	PieChart,
+	RadarChart,
     CartesianGrid,
     XAxis,
-    YAxis,
+	YAxis,
+	PolarGrid,
+	PolarAngleAxis,
+	PolarRadiusAxis,
     Tooltip,
     Legend,
 	Bar,
 	Pie,
+	Radar,
 	Line,
 	Label
 } from 'recharts'
@@ -19,6 +24,7 @@ import {
 import Button from 'material-ui/Button';
 import Grid from 'material-ui/Grid'
 import Card, { CardActions, CardContent } from 'material-ui/Card';
+import Modal from 'material-ui/Modal'
 
 import Webcam from 'react-webcam';
 
@@ -36,6 +42,7 @@ class App extends Component {
 		} else {
 			this.recognition = new window.webkitSpeechRecognition()
 			this.state = {
+				modalOpen: false,
 				emotionData: [],
 				emotionDataList: [],
 				sentimentData: [],
@@ -115,6 +122,14 @@ class App extends Component {
 		}, 1000)
 	}
 
+	modalOpen = () => {
+		this.setState({modalOpen: true})
+	}
+
+	modalClose = () => {
+		this.setState({modalOpen: false})
+	}
+
 	async getEmotion(noteContent) {
 		await fetch('https://nltk-api.herokuapp.com/result', {
 			method: 'POST',
@@ -186,7 +201,7 @@ class App extends Component {
                 <Tooltip />
                 <Legend />
 				<Label value="Textual Emotion Analysis" offset={0} position="bottom" />
-                <Bar dataKey="value" fill="#82ca9d" />
+                <Bar name="Intensity of Emotion" dataKey="value" fill="#82ca9d" />
             </BarChart>
 		)
 	}
@@ -217,7 +232,7 @@ class App extends Component {
 				<Tooltip />
 				<Legend />
 				<Label value="Visual Emotion Analysis" offset={0} position="bottom" />
-				<Bar dataKey="value" fill="#82ca9d" />
+				<Bar name="Intensity of Emotion" dataKey="value" fill="#82ca9d" />
 			</BarChart>
 		)
 	}
@@ -251,13 +266,69 @@ class App extends Component {
 			<div>
 				<Webcam
 					audio={false}
-					height={150}
+					height={135}
 					ref={this.setWebcamRef}
 					screenshotFormat="image/jpeg"
 					width={150}
 				/>
 			</div>
 		)
+	}
+
+	renderResultGraph(){
+		if (this.state.emotionAverage && this.state.faceAverage){
+			var data = []
+			// anger
+			data.push({
+				"name" : "anger",
+				"value" : this.state.emotionAverage.angry*0.5 + this.state.faceAverage.anger*0.5
+			})
+			//sad
+			data.push({
+				"name" : "sad",
+				"value" : this.state.emotionAverage.sad*0.5 + this.state.faceAverage.sadness*0.50
+			})
+			//neutral
+			data.push({
+				"name" : "neutral",
+				"value" : this.state.emotionAverage.indifferent*0.5 + this.state.faceAverage.neutral*0.5
+			})
+			//amazed
+			data.push({
+				"name" : "amazed",
+				"value" : this.state.emotionAverage.excited*0.5 + this.state.faceAverage.surprise*0.50
+			})
+			//fear
+			data.push({
+				"name" : "fear",
+				"value" : this.state.faceAverage.fear
+			})
+			//disgust
+			data.push({
+				"name" : "disgust",
+				"value" : this.state.faceAverage.contempt + this.state.faceAverage.disgust
+			})
+			//happy
+			data.push({
+				"name" : "happy",
+				"value" : this.state.emotionAverage.happy*0.5 + this.state.faceAverage.happiness*0.5
+			})
+
+			return(
+				<RadarChart outerRadius={90} width={730} height={250} data={data}>
+					<PolarGrid />
+					<PolarAngleAxis dataKey="name" />
+					<PolarRadiusAxis angle={30} />
+					<Radar name="Intensity" dataKey="value" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+					<Legend />
+				</RadarChart>
+			)
+		}
+		return (
+			<div>
+			</div>
+		)
+
 	}
 
 	renderButtons(){
@@ -281,6 +352,7 @@ class App extends Component {
 									}
 								})
 							})
+							this.setState({faceAverage: faceAverage})
 
 							var emotionAverage = {}
 							this.state.emotionDataList.map((data, i) => {
@@ -292,8 +364,10 @@ class App extends Component {
 									}
 								})
 							})
+							this.setState({emotionAverage: emotionAverage})
 						}
-						this.recognition.stop() 
+						this.recognition.stop()
+						this.modalOpen()
 					} }>
 						Stop !
 					</Button>
@@ -329,10 +403,18 @@ class App extends Component {
 					<Grid item xs = {12} >
 						<Grid container justify="center" spacing={16}>
 							<Grid item>
-								<Card style = {{ height: 290 }} className = {card}>
+								<Card style = {{ height: 340 }} className = {card}>
 									<CardContent>
 										{ this.renderButtons() }
 										{ this.renderPerson() }
+									</CardContent>
+								</Card>
+							</Grid>
+							<Grid item>
+								<Card className = {card} style = {{ maxHeight: 340 }}>
+									<CardContent>
+										{ this.renderWebCam() }
+										{ this.renderKeywords() }
 									</CardContent>
 								</Card>
 							</Grid>
@@ -341,14 +423,6 @@ class App extends Component {
 									<CardContent>
 										{ this.renderBarGraph() }	
 										<p>Textual Emotion Analysis</p>
-									</CardContent>
-								</Card>
-							</Grid>
-							<Grid item>
-								<Card className = {card}>
-									<CardContent>
-										{ this.renderWebCam() }
-										{ this.renderKeywords() }
 									</CardContent>
 								</Card>
 							</Grid>
@@ -375,6 +449,25 @@ class App extends Component {
 						</Grid>
 					</Grid>
 				</Grid>
+				<Modal
+					aria-labelledby="simple-modal-title"
+					aria-describedby="simple-modal-description"
+					open={this.state.modalOpen}
+					onClose={this.modalClose}
+				>
+					<Card style = {{ 
+						height: 400, 
+						width: 800,
+						position: "absolute",
+						top: 150,
+						left: 300,
+					}}>
+						<CardContent>
+							<h4> Result </h4>
+							{ this.renderResultGraph() }
+						</CardContent>
+					</Card>
+				</Modal>
 			</div> 
 		);
 	}

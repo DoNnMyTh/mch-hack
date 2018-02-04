@@ -27,7 +27,8 @@ export default class Person extends Component {
                             messages={ this.getMessages() } // Boolean: list of message objects
                             hasInputField={ false } // Boolean: use our input, or use your own
                             bubblesCentered={ true } //Boolean should the bubbles be centered in the feed?
-                            maxHeight = { 170 }
+                            maxHeight = { 200 }
+                            style = {{ marginTop: 20 }}
                             // JSON: Custom bubble styles
                             bubbleStyles={
                                 {
