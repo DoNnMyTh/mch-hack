@@ -12,10 +12,13 @@ import {
     Legend,
 	Bar,
 	Pie,
-	Line
+	Line,
+	Label
 } from 'recharts'
 
-import { Modal } from 'react-materialize'
+import Button from 'material-ui/Button';
+import Grid from 'material-ui/Grid'
+import Card, { CardActions, CardContent } from 'material-ui/Card';
 
 import Webcam from 'react-webcam';
 
@@ -103,19 +106,16 @@ class App extends Component {
 					}
 
 					this.setState({faceEmotionData: data})
-					console.log(this.state.faceEmotionData)
 					this.setState((prevState) => {{ faceEmotionDataList: prevState.faceEmotionDataList.push(data) }})
 					// this.setState((prevState) => {{ faceEmotionData: prevState.faceEmotionData.push(responseJson[0].scores) }})
 				})
 				.catch((error) => {
-					console.log(base64)
 				})
 			}
 		}, 1000)
 	}
 
 	async getEmotion(noteContent) {
-		console.log("asdf")
 		await fetch('https://nltk-api.herokuapp.com/result', {
 			method: 'POST',
 			headers: {
@@ -152,15 +152,15 @@ class App extends Component {
 			var prevSentimentData = this.state.sentimentData
 			prevSentimentData.push(temp)
 			this.setState({sentimentData: prevSentimentData})
-			console.log(this.state.sentimentData)
+
+			console.log(responseJson[0])
 
 			data = responseJson[0].keywords
 			temp = []
 			for(var i = 0; i < data.length; i++) {
-				temp.push(data[i].keyword)
+				temp.push(data[i])
 			}
 			this.setState({keywords: temp})
-			console.log(this.state.keywords)
 
 			return responseJson
 		})
@@ -179,12 +179,13 @@ class App extends Component {
 
 	renderBarGraph(){
 		return (
-			<BarChart width={730} height={250} data={ this.state.emotionData }>
+			<BarChart width={530} height={250} data={ this.state.emotionData }>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
+				<Label value="Textual Emotion Analysis" offset={0} position="bottom" />
                 <Bar dataKey="value" fill="#82ca9d" />
             </BarChart>
 		)
@@ -192,12 +193,13 @@ class App extends Component {
 
 	renderLineGraph(){
 		return (
-			<LineChart width={600} height={300} data={ [...this.state.sentimentData] } margin={{top: 5, right: 30, left: 20, bottom: 5}}>
+			<LineChart width={400} height={250} data={ [...this.state.sentimentData] } margin={{top: 5, right: 30, left: 20, bottom: 5}}>
 				<XAxis dataKey="name"/>
 				<YAxis/>
 				<CartesianGrid strokeDasharray="3 3"/>
 				<Tooltip/>
 				<Legend />
+				<Label value="Textual Sentimental Analysis" offset={0} position="bottom" />
 				<Line type="monotone" dataKey="positive" stroke="#8884d8" activeDot={{r: 8}}/>
 				<Line type="monotone" dataKey="neutral" stroke="#82ca9d" activeDot={{r: 8}}/>
 				<Line type="monotone" dataKey="negative" stroke="#FF0000" activeDot={{r: 8}}/>
@@ -208,12 +210,13 @@ class App extends Component {
 
 	renderPieGraph() {
 		return (
-			<BarChart width={730} height={250} data={ this.state.faceEmotionData }>
+			<BarChart width={600} height={250} data={ this.state.faceEmotionData }>
 				<CartesianGrid strokeDasharray="3 3" />
 				<XAxis dataKey="name" />
 				<YAxis />
 				<Tooltip />
 				<Legend />
+				<Label value="Visual Emotion Analysis" offset={0} position="bottom" />
 				<Bar dataKey="value" fill="#82ca9d" />
 			</BarChart>
 		)
@@ -221,24 +224,16 @@ class App extends Component {
 
 	renderKeywords(){
 		return (
-			<table>
-				<tbody>
-					<tr>
-						<td>
-							<h3>Keywords</h3>
-						</td>
-						<td>
-							<ol>
-								{
-									this.state.keywords.map((data, i) => (
-										<li key = {i}> {data} </li>
-									))
-								}
-							</ol>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+			<div>
+				<h4>Keywords</h4>
+				<ol>
+					{
+						this.state.keywords.map((data, i) => (
+							<li key = {i}> {data} </li>
+						))
+					}
+				</ol>
+			</div>
 		)
 	}
 
@@ -256,17 +251,11 @@ class App extends Component {
 			<div>
 				<Webcam
 					audio={false}
-					height={350}
+					height={150}
 					ref={this.setWebcamRef}
 					screenshotFormat="image/jpeg"
-					width={350}
+					width={150}
 				/>
-				<button onClick = {() => {
-					let base64 = this.capture()
-					console.log(base64)
-				}}>
-					capture
-				</button>
 			</div>
 		)
 	}
@@ -275,10 +264,12 @@ class App extends Component {
 		if (this.state.support){
 			if (this.state.running)
 				return (
-					<button onClick = { () => { 
+					<Button 
+					raised 
+					color="secondary" 
+					onClick = { () => { 
 						if (!this.state.forceEnd){
 							this.setState({forceEnd: true})
-							console.log(this.state.faceEmotionDataList)
 
 							var faceAverage = {}
 							this.state.faceEmotionDataList.map((data, i) => {
@@ -290,7 +281,6 @@ class App extends Component {
 									}
 								})
 							})
-							console.log(faceAverage)
 
 							var emotionAverage = {}
 							this.state.emotionDataList.map((data, i) => {
@@ -302,19 +292,22 @@ class App extends Component {
 									}
 								})
 							})
-							console.log(emotionAverage)
 						}
 						this.recognition.stop() 
 					} }>
 						Stop !
-					</button>
+					</Button>
 				)
 			else {
 				return (
-					<button onClick = { () => { this.recognition.start() 
-					} }>
-						Start !
-					</button>
+					<Button 
+						raised 
+						color="primary" 
+						onClick = { () => { this.recognition.start() } }
+					>
+						Start
+					</Button>
+			
 				)
 			}
 		} else {
@@ -325,15 +318,63 @@ class App extends Component {
 	}
 
 	render() {
+		const card = {
+			"background-color": "#a09c9c"
+		}
+
 		return (
-			<div className="App">
-				{ this.renderButtons() }
-				{ this.renderPerson() }
-				{ this.renderBarGraph() }
-				{ this.renderLineGraph() }
-				{ this.renderPieGraph() }
-				{ this.renderKeywords() }
-				{ this.renderWebCam() }
+			<div className="App" style = {{ padding: 40 }}>
+
+				<Grid container>
+					<Grid item xs = {12} >
+						<Grid container justify="center" spacing={16}>
+							<Grid item>
+								<Card style = {{ height: 290 }} className = {card}>
+									<CardContent>
+										{ this.renderButtons() }
+										{ this.renderPerson() }
+									</CardContent>
+								</Card>
+							</Grid>
+							<Grid item>
+								<Card className = {card}>
+									<CardContent>
+										{ this.renderBarGraph() }	
+										<p>Textual Emotion Analysis</p>
+									</CardContent>
+								</Card>
+							</Grid>
+							<Grid item>
+								<Card className = {card}>
+									<CardContent>
+										{ this.renderWebCam() }
+										{ this.renderKeywords() }
+									</CardContent>
+								</Card>
+							</Grid>
+						</Grid>
+					</Grid>
+					<Grid item xs = {12}>
+						<Grid container justify="center" spacing={16}>
+							<Grid item >
+								<Card className = {card}>
+									<CardContent>
+										{ this.renderLineGraph() }
+										<p>Textual Sentimental Analysis</p>
+									</CardContent>
+								</Card>
+							</Grid>
+							<Grid item >
+								<Card className = {card}>
+									<CardContent>
+										{ this.renderPieGraph() }
+										<p>Visual Emotion Analysis</p>
+									</CardContent>
+								</Card>
+							</Grid>
+						</Grid>
+					</Grid>
+				</Grid>
 			</div> 
 		);
 	}
